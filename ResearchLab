@@ -1,1 +1,82 @@
+mkdir -p ~/projects/research-lab/{papers,books,data,notebooks,output,references,tools}
+tree ~/projects/research-lab
+find ~/projects/research-lab -maxdepth 2 -type d
+cd ~/projects/research-lab
+mkdir -p compose/quarto
+cd compose
+nano quarto/Dockerfile
 
+
+FROM ghcr.io/quarto-dev/quarto:1.11.5
+
+RUN apt-get update && \
+    apt-get install -y \
+        pandoc \
+        texlive-xetex \
+        texlive-latex-extra \
+        texlive-fonts-recommended \
+        fonts-noto-core \
+        && \
+    rm -rf /var/lib/apt/lists/*
+
+
+nano docker-compose.yml
+
+services:
+
+  # ==========================================
+  # QUARTO - Academic writing and book writing
+  # ==========================================
+  quarto:
+    build:
+      context: ./quarto
+      dockerfile: Dockerfile
+    container_name: research-quarto
+    volumes:
+      - ../papers:/workspace/papers
+      - ../books:/workspace/books
+      - ../references:/workspace/references
+      - ../output:/workspace/output
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+
+
+  # ==========================================
+  # JUPYTER - Python + R research analysis
+  # ==========================================
+  jupyter:
+    image: quay.io/jupyter/datascience-notebook:2026-07-28
+    container_name: research-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ../notebooks:/home/jovyan/work/notebooks
+      - ../data:/home/jovyan/work/data
+      - ../papers:/home/jovyan/work/papers
+      - ../output:/home/jovyan/work/output
+    environment:
+      JUPYTER_ENABLE_LAB: "yes"
+    restart: unless-stopped
+
+
+  # ==========================================
+  # POSTGRESQL - Research database
+  # ==========================================
+  postgres:
+    image: postgres:18
+    container_name: research-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: research
+      POSTGRES_USER: researcher
+      POSTGRES_PASSWORD: research_local_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+
+volumes:
+
+  postgres_data:
