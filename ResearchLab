@@ -76,7 +76,20 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-
 volumes:
 
   postgres_data:
+
+
+
+Check the Compose file
+Before starting anything:
+docker compose config
+If there are no errors, continue.
+docker compose build
+docker compose up -d
+docker compose ps
+docker compose run --rm quarto quarto --version
+docker compose run --rm quarto pandoc --version
+docker compose run --rm quarto xelatex --version
+docker compose logs jupyter
